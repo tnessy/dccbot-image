@@ -9,9 +9,17 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends libmagic1 curl ca-certificates \
  && apt-get clean
 
-RUN curl -fsSL "https://github.com/luni/dccbot/archive/refs/tags/v${DCCBOT_VERSION}.tar.gz" -o /tmp/dccbot.tar.gz \
- && mkdir /tmp/src && tar -xzf /tmp/dccbot.tar.gz -C /tmp/src --strip-components=1 \
- && pip install --no-cache-dir /tmp/src
+# dccbot looks for its web assets at <package dir>/../static (STATIC_DIR in dccbot/app.py), so a normal
+# `pip install .` into site-packages crashes at start ("site-packages/static does not exist").
+# Install it editable from the extracted source tree so the package and static/ stay side by side.
+RUN mkdir -p /opt/dccbot \
+ && curl -fsSL "https://github.com/luni/dccbot/archive/refs/tags/v${DCCBOT_VERSION}.tar.gz" \
+    | tar -xz -C /opt/dccbot --strip-components=1 \
+ && pip install --no-cache-dir -e /opt/dccbot \
+ && chmod -R a+rX /opt/dccbot
+
+# Fail the build (not the container) if the static assets are not where dccbot expects them.
+RUN python -c "from dccbot.app import STATIC_DIR; assert STATIC_DIR.is_dir() and (STATIC_DIR / 'index.html').is_file(), STATIC_DIR"
 
 # Renders config.json from config.example.json plus environment values (used by post-deploy.sh).
 COPY render_config.py /opt/render_config.py

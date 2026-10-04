@@ -1,0 +1,31 @@
+{
+  "servers": {
+    "irc.rizon.net": {
+      "nick": "animecat-spike",
+      "random_nick": true,
+      "use_tls": true,
+      "port": 6697,
+      "channels": []
+    }
+  },
+  "default_server_config": {
+    "use_tls": true,
+    "random_nick": true
+  },
+  "default_download_path": "/data/_spike/xdcc",
+  "allowed_mimetypes": [
+    "video/x-matroska", "video/mp4", "video/x-msvideo", "video/webm",
+    "application/zip", "application/gzip", "application/x-rar", "application/x-7z-compressed",
+    "text/plain", "image/jpeg", "image/png"
+  ],
+  "max_file_size": 3221225472,
+  "auto_md5sum": true,
+  "incomplete_suffix": ".incomplete",
+  "allow_private_ips": false,
+  "passive_dcc": false,
+  "send_queue_delay": 15,
+  "send_queue_cooldown": 5,
+  "send_queue_max_wait": 300,
+  "send_queue_max_concurrent": 1,
+  "http": { "host": "0.0.0.0", "port": 9999, "socket": null }
+}

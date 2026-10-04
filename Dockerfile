@@ -23,6 +23,8 @@ RUN python -c "from dccbot.app import STATIC_DIR; assert STATIC_DIR.is_dir() and
 
 # Renders config.json from config.example.json plus environment values (used by post-deploy.sh).
 COPY render_config.py /opt/render_config.py
+COPY entrypoint.sh /opt/entrypoint.sh
+RUN chmod 755 /opt/entrypoint.sh
 
 # /config holds config.json; /data is the download root (map your downloads share here).
 # Run as the NAS user with --user (for example 99:100 on Unraid) so files are owned correctly.
@@ -38,5 +40,6 @@ EXPOSE 9999
 HEALTHCHECK --interval=60s --timeout=5s --start-period=20s \
   CMD python -c "import urllib.request as u; u.urlopen('http://127.0.0.1:9999/info', timeout=3)" || exit 1
 
-ENTRYPOINT ["dccbot"]
+ENV UMASK=000
+ENTRYPOINT ["/opt/entrypoint.sh"]
 CMD ["--config", "/config/config.json"]

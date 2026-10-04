@@ -18,6 +18,7 @@ API_BIND_IP="${API_BIND_IP:?set API_BIND_IP to the NAS LAN address; the API has 
 API_PORT="${API_PORT:-9999}"
 PUID="${PUID:-99}"
 PGID="${PGID:-100}"
+UMASK="${UMASK:-000}"
 CONTAINER_NAME="${CONTAINER_NAME:-dccbot}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 
@@ -50,6 +51,7 @@ docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
 # shellcheck disable=SC2086
 docker run -d --name "$CONTAINER_NAME" --restart unless-stopped \
   --user "$PUID:$PGID" \
+  -e UMASK="$UMASK" \
   -v "$APPDATA_DIR:/config" \
   -v "$DOWNLOADS_DIR:/data" \
   -p "$API_BIND_IP:$API_PORT:9999" \

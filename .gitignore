@@ -1,0 +1,5 @@
+# Real values never go in the repo
+deploy.env
+config.json
+*.env
+!deploy.env.example

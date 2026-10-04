@@ -1,0 +1,60 @@
+name: publish
+
+# Builds the image and pushes it to GitHub Container Registry, then creates a GitHub Release
+# carrying the deploy files. Trigger by pushing a tag such as v0.1.0 (or run it by hand).
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # create the release
+  packages: write   # push to ghcr.io
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read the pinned dccbot version
+        id: ver
+        run: echo "dccbot=$(tr -d '[:space:]' < DCCBOT_VERSION)" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=sha
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64
+          build-args: |
+            DCCBOT_VERSION=${{ steps.ver.outputs.dccbot }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Create the GitHub Release with the deploy files
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --generate-notes \
+            --title "$GITHUB_REF_NAME (dccbot ${{ steps.ver.outputs.dccbot }})" \
+            post-deploy.sh config.example.json deploy.env.example
